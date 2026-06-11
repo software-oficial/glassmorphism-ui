@@ -9,7 +9,7 @@ app.use('/api', createProxyMiddleware({
   target: 'https://ecosistema-core-production.up.railway.app', 
   changeOrigin: true,
   pathRewrite: {
-    '^/api': '/api' 
+    '^/api': '' 
   }
 }));
 
