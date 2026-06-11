@@ -13,13 +13,13 @@ class ApiClient {
     private userId: string = 'admin_user';
 
     constructor() {
-        // Use environment variable or default to Railway production URL
-        this.baseUrl = (import.meta.env.VITE_API_URL) || 'https://ecosistema-core-production.up.railway.app';
+        // Usamos ruta relativa para que el proxy del servidor maneje la petición y evite el CORS
+        this.baseUrl = '/api';
     }
 
     async executeCommand<T = any>(command: string, params: any = {}): Promise<ApiResponse<T>> {
         try {
-            const url = `${this.baseUrl}/api/command`;
+            const url = `${this.baseUrl}/command`;
             const response = await axios.post(url, 
             {
                 command,
@@ -53,3 +53,4 @@ class ApiClient {
 }
 
 export const api = new ApiClient();
+
