@@ -1,6 +1,7 @@
 import { UIComponent } from '../../core/component';
 import { AppIcon } from './AppIcon';
 import { PanelManager } from '../../core/panel-manager';
+import { platformBridge } from '../../core/platform';
 
 interface DockState {
   apps: Array<{ id: string; type: string }>;
@@ -17,14 +18,32 @@ export class Dock extends UIComponent<DockState> {
 
   constructor(panelManager: PanelManager) {
     super({
-      apps: [
-        { id: 'stock', type: 'folder' },
-        { id: 'whatsapp', type: 'terminal' },
-        { id: 'payments', type: 'settings' },
-        { id: 'admin', type: 'user' }
-      ]
+      apps: this.resolveAppsByPlatform()
     });
     this.panelManager = panelManager;
+  }
+
+  /**
+   * Define qué aplicaciones aparecen en el dock según la plataforma y el propósito.
+   * Esto evita que la interfaz sea un "SO" genérico y la convierte en una herramienta de gestión.
+   */
+  private resolveAppsByPlatform(): Array<{ id: string; type: string }> {
+    const platform = platformBridge.getPlatform();
+    
+    // Configuración base enfocada en el negocio, no en el sistema
+    const baseApps = [
+      { id: 'stock', type: 'inventory' },
+      { id: 'whatsapp', type: 'communication' },
+      { id: 'payments', type: 'finance' },
+      { id: 'admin', type: 'management' }
+    ];
+
+    // Adaptación según dispositivo (ejemplo: en móvil podríamos simplificar o cambiar el orden)
+    if (platform === 'android' || platform === 'ios') {
+      return baseApps.filter(app => app.id !== 'admin'); // Ejemplo: Ocultar admin en móvil por seguridad/espacio
+    }
+
+    return baseApps;
   }
 
   protected createElement(): HTMLElement {
@@ -44,7 +63,6 @@ export class Dock extends UIComponent<DockState> {
         active: false 
       });
       
-      // Intercept click to launch panel via PanelManager
       icon.domElement.onclick = async (e) => {
         e.stopPropagation();
         await this.panelManager.openPanel(app.id);
