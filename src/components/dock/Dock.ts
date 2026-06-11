@@ -18,10 +18,10 @@ export class Dock extends UIComponent<DockState> {
   constructor(panelManager: PanelManager) {
     super({
       apps: [
-        { id: 'StockPanel', type: 'folder' },
-        { id: 'WhatsAppPanel', type: 'terminal' },
-        { id: 'PaymentPanel', type: 'settings' },
-        { id: 'AdminPanel', type: 'user' }
+        { id: 'stock', type: 'folder' },
+        { id: 'whatsapp', type: 'terminal' },
+        { id: 'payments', type: 'settings' },
+        { id: 'admin', type: 'user' }
       ]
     });
     this.panelManager = panelManager;

@@ -13,7 +13,9 @@ export class PanelManager {
      * Registra un panel en el sistema para que pueda ser gestionado.
      */
     public registerPanel(panel: BasePanel): void {
-        this.panels.set(panel.constructor.name, panel);
+        // Usamos el ID interno del panel en lugar del nombre de la clase para evitar problemas con la minificación
+        const panelId = (panel as any).panelId || panel.constructor.name;
+        this.panels.set(panelId, panel);
         // Montamos el panel en el DOM pero inicialmente oculto (manejado por BasePanel)
         panel.mount(this.container);
     }
@@ -21,10 +23,10 @@ export class PanelManager {
     /**
      * Abre un panel y lo pone al frente (enfocado).
      */
-    public async openPanel(panelClassName: string): Promise<void> {
-        const panel = this.panels.get(panelClassName);
+    public async openPanel(panelId: string): Promise<void> {
+        const panel = this.panels.get(panelId);
         if (!panel) {
-            console.error(`[PanelManager] Panel ${panelClassName} not registered.`);
+            console.error(`[PanelManager] Panel ${panelId} not registered.`);
             return;
         }
 
@@ -32,7 +34,7 @@ export class PanelManager {
         this.updateZIndices();
 
         // 2. Abrir el panel solicitado
-        this.activePanelId = panelClassName;
+        this.activePanelId = panelId;
         await panel.open();
         
         // 3. Forzar el enfoque visual (estilo macOS)

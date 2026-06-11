@@ -40,7 +40,7 @@ class App extends UIComponent {
         panelsContainer.style.height = '100%';
         panelsContainer.style.zIndex = '10';
         panelsContainer.style.pointerEvents = 'none';
-        
+
         this.element.appendChild(panelsContainer);
 
         this.panelManager = new PanelManager(panelsContainer);
@@ -63,7 +63,7 @@ class App extends UIComponent {
         }
 
         // Launch default panel so the screen isn't empty
-        await this.panelManager.openPanel('StockPanel');
+        await this.panelManager.openPanel('stock');
     }
 
     protected createElement(): HTMLElement {
@@ -88,3 +88,4 @@ window.addEventListener('DOMContentLoaded', () => {
     const app = new App();
     app.mount(document.body);
 });
+
