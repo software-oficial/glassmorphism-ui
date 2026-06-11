@@ -1,5 +1,6 @@
 import { UIComponent } from '../../core/component';
 import { AppIcon } from './AppIcon';
+import { PanelManager } from '../../core/panel-manager';
 
 interface DockState {
   apps: Array<{ id: string; type: string }>;
@@ -9,10 +10,22 @@ export class Dock extends UIComponent<DockState> {
   private items: HTMLElement[] = [];
   private mouseX = -1000;
   private isAnimating = false;
+  private panelManager: PanelManager;
   
-  // Caché de dimensiones para evitar Layout Thrashing
   private cachedDockLeft = 0;
   private cachedItemCenters: number[] = [];
+
+  constructor(panelManager: PanelManager) {
+    super({
+      apps: [
+        { id: 'StockPanel', type: 'folder' },
+        { id: 'WhatsAppPanel', type: 'terminal' },
+        { id: 'PaymentPanel', type: 'settings' },
+        { id: 'AdminPanel', type: 'user' }
+      ]
+    });
+    this.panelManager = panelManager;
+  }
 
   protected createElement(): HTMLElement {
     const div = document.createElement('div');
@@ -25,7 +38,19 @@ export class Dock extends UIComponent<DockState> {
     this.items = [];
     
     this.state.apps.forEach(app => {
-      const icon = new AppIcon({ appId: app.id, iconType: app.type, active: false });
+      const icon = new AppIcon({ 
+        appId: app.id, 
+        iconType: app.type, 
+        active: false 
+      });
+      
+      // Intercept click to launch panel via PanelManager
+      icon.domElement.onclick = async (e) => {
+        e.stopPropagation();
+        await this.panelManager.openPanel(app.id);
+        icon.setState({ active: true });
+      };
+
       icon.mount(this.element);
       this.items.push(icon.domElement);
     });
@@ -46,7 +71,6 @@ export class Dock extends UIComponent<DockState> {
   }
 
   private initEvents(): void {
-    // Actualizamos la caché si la ventana cambia de tamaño
     window.addEventListener('resize', () => this.cacheDimensions(), { passive: true });
 
     this.element.addEventListener('mousemove', (e) => {

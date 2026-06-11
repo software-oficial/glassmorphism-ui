@@ -37,7 +37,7 @@ export abstract class UIComponent<TState = any> {
   /**
    * Helper para crear elementos de forma segura evitando innerHTML
    */
-  protected h(tag: string, props: Record<string, any> = {}, children: (HTMLElement | string)[] = []): HTMLElement {
+  protected h(tag: string, props: Record<string, any> = {}, children: (HTMLElement | string | any[])[] = []): HTMLElement {
     const el = document.createElement(tag);
     for (const [key, value] of Object.entries(props)) {
       if (key === 'className') el.className = value;
@@ -49,11 +49,27 @@ export abstract class UIComponent<TState = any> {
         (el as any)[key] = value;
       }
     }
-    children.forEach(child => {
+    
+    const flattenChildren = (items: any[]): (HTMLElement | string)[] => {
+      return items.reduce((acc, item) => {
+        if (Array.isArray(item)) {
+          acc.push(...flattenChildren(item));
+        } else if (item === null || item === undefined) {
+          // Skip null/undefined children
+        } else {
+          acc.push(item);
+        }
+        return acc;
+      }, [] as (HTMLElement | string)[]);
+    };
+
+    flattenChildren(children).forEach(child => {
       if (typeof child === 'string') {
         el.appendChild(document.createTextNode(child));
-      } else {
+      } else if (child instanceof HTMLElement) {
         el.appendChild(child);
+      } else {
+        console.warn(`[UIComponent] Invalid child type provided to h(): ${typeof child}`, child);
       }
     });
     return el;

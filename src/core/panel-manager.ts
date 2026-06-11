@@ -1,65 +1,59 @@
 import { BasePanel } from './base-panel';
-import { store } from './store';
 
 export class PanelManager {
-  private activePanels: Map<string, BasePanel> = new Map();
-  private rootContainer: HTMLElement;
-  private highestZIndex = 100;
+    private panels: Map<string, BasePanel> = new Map();
+    private activePanelId: string | null = null;
+    private container: HTMLElement;
 
-  constructor(rootId: string) {
-    this.rootContainer = document.getElementById(rootId) || document.body;
-  }
-
-  /**
-   * Monta un panel en la pantalla. Si ya existe, lo trae al frente.
-   */
-  public async mountPanel(panelId: string, PanelClass: new (id: string) => BasePanel): Promise<void> {
-    if (this.activePanels.has(panelId)) {
-      this.focusPanel(panelId);
-      return;
+    constructor(container: HTMLElement) {
+        this.container = container;
     }
 
-    const panel = new PanelClass(panelId);
-    panel.render();
-    
-    this.rootContainer.appendChild(panel.element);
-    this.activePanels.set(panelId, panel);
-    this.focusPanel(panelId);
-    
-    console.log(`[PanelManager] Panel ${panelId} mounted and focused.`);
-  }
-
-  /**
-   * Trae el panel al frente y marca los demás como desenfocados.
-   */
-  public focusPanel(panelId: string): void {
-    const panel = this.activePanels.get(panelId);
-    if (!panel) return;
-
-    this.highestZIndex++;
-    panel.element.style.zIndex = this.highestZIndex.toString();
-    
-    // Actualizar clases de enfoque para optimización de GPU (CSS)
-    this.activePanels.forEach((p, id) => {
-      p.element.classList.toggle('panel-focused', id === panelId);
-      p.element.classList.toggle('panel-blurred', id !== panelId);
-    });
-
-    store.setState('system', { activePanel: panelId });
-  }
-
-  public unmountPanel(panelId: string): void {
-    const panel = this.activePanels.get(panelId);
-    if (panel) {
-      panel.destroy();
-      this.activePanels.delete(panelId);
-      console.log(`[PanelManager] Panel ${panelId} unmounted and memory freed.`);
+    /**
+     * Registra un panel en el sistema para que pueda ser gestionado.
+     */
+    public registerPanel(panel: BasePanel): void {
+        this.panels.set(panel.constructor.name, panel);
+        // Montamos el panel en el DOM pero inicialmente oculto (manejado por BasePanel)
+        panel.mount(this.container);
     }
-  }
 
-  public clearAll(): void {
-    this.activePanels.forEach((_, id) => this.unmountPanel(id));
-  }
+    /**
+     * Abre un panel y lo pone al frente (enfocado).
+     */
+    public async openPanel(panelClassName: string): Promise<void> {
+        const panel = this.panels.get(panelClassName);
+        if (!panel) {
+            console.error(`[PanelManager] Panel ${panelClassName} not registered.`);
+            return;
+        }
+
+        // 1. Desenfocar paneles actuales
+        this.updateZIndices();
+
+        // 2. Abrir el panel solicitado
+        this.activePanelId = panelClassName;
+        await panel.open();
+        
+        // 3. Forzar el enfoque visual (estilo macOS)
+        this.updateZIndices();
+    }
+
+    public closeAll(): void {
+        this.panels.forEach(panel => panel.close());
+        this.activePanelId = null;
+    }
+
+    private updateZIndices(): void {
+        this.panels.forEach((panel, id) => {
+            const el = panel.domElement;
+            if (id === this.activePanelId) {
+                el.style.zIndex = '1000';
+                el.classList.add('panel-focused');
+            } else {
+                el.style.zIndex = '1';
+                el.classList.remove('panel-focused');
+            }
+        });
+    }
 }
-
-export const panelManager = new PanelManager('app');

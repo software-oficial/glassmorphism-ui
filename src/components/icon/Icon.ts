@@ -6,7 +6,7 @@ export interface IconOptions {
 }
 
 export class Icon {
-  private element: SVGElement;
+  private _element: SVGElement;
   private options: IconOptions;
 
   constructor(private id: string, options: IconOptions = {}) {
@@ -16,7 +16,7 @@ export class Icon {
       ...options
     };
 
-    this.element = this.createIconElement();
+    this._element = this.createIconElement();
   }
 
   private createIconElement(): SVGElement {
@@ -44,10 +44,10 @@ export class Icon {
   }
 
   public mount(parent: HTMLElement): void {
-    parent.appendChild(this.element);
+    parent.appendChild(this._element);
   }
 
   public get element() {
-    return this.element;
+    return this._element;
   }
 }

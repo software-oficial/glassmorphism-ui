@@ -80,26 +80,15 @@ body {
   overflow: hidden;
   color: var(--text-primary);
   user-select: none;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: block;
   transition: background 0.5s ease;
 }
 
-.glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--glass-shadow);
-  max-width: 90vw;
-  margin: auto;
-  
-  /* Optimización GPU: Promoción a capa independiente */
-  will-change: transform, backdrop-filter;
-  transform: translateZ(0); 
-  transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+.app-shell {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* --- Optimización de Multi-Paneles (Performance Mode) --- */
