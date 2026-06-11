@@ -71,7 +71,6 @@ body[data-theme="light"][data-tier="low"] {
 
 body {
   margin: 0;
-// ... rest of the code
 
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
