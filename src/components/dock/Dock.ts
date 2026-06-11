@@ -18,7 +18,7 @@ export class Dock extends UIComponent<DockState> {
 
   constructor(panelManager: PanelManager) {
     super({
-      apps: this.resolveAppsByPlatform()
+      apps: Dock.resolveAppsByPlatform()
     });
     this.panelManager = panelManager;
   }
@@ -27,7 +27,7 @@ export class Dock extends UIComponent<DockState> {
    * Define qué aplicaciones aparecen en el dock según la plataforma y el propósito.
    * Esto evita que la interfaz sea un "SO" genérico y la convierte en una herramienta de gestión.
    */
-  private resolveAppsByPlatform(): Array<{ id: string; type: string }> {
+  private static resolveAppsByPlatform(): Array<{ id: string; type: string }> {
     const platform = platformBridge.getPlatform();
     
     // Configuración base enfocada en el negocio, no en el sistema
