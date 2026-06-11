@@ -26,7 +26,7 @@ export class SVGAssetManager {
 
   public async loadManifest(): Promise<void> {
     try {
-      const response = await fetch('/src/assets/icons-manifest.json');
+      const response = await fetch('/assets/icons-manifest.json');
       this.manifest = await response.json();
       console.log('📚 [SVGAssetManager] Manifest loaded successfully.');
     } catch (error) {
@@ -66,7 +66,7 @@ export class SVGAssetManager {
     }
 
     try {
-      const response = await fetch(`/src/assets/icons/${fileName}`);
+      const response = await fetch(`/assets/icons/${fileName}`);
       const svgContent = await response.text();
       
       // Extraer todo el contenido dentro de la etiqueta <svg>...</svg>
