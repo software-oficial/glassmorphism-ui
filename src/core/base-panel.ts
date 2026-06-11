@@ -10,11 +10,11 @@ export interface PanelState {
 
 export abstract class BasePanel extends UIComponent<PanelState> {
     protected panelId: string;
-    protected wrapperElement: HTMLElement;
-    protected contentElement: HTMLElement;
-    protected headerElement: HTMLElement;
-    protected errorElement: HTMLElement;
-    protected loaderElement: HTMLElement;
+    protected wrapperElement!: HTMLElement;
+    protected contentElement!: HTMLElement;
+    protected headerElement!: HTMLElement;
+    protected errorElement!: HTMLElement;
+    protected loaderElement!: HTMLElement;
 
     constructor(id: string, initialState: Partial<PanelState> = {}) {
         super({
@@ -25,8 +25,11 @@ export abstract class BasePanel extends UIComponent<PanelState> {
             ...initialState
         });
         this.panelId = id;
-        
-        // Crear elementos persistentes para evitar innerHTML
+    }
+
+    private initElements(): void {
+        if (this.wrapperElement) return;
+
         this.wrapperElement = this.h('div', { 
             className: 'glass-panel',
             style: 'display: none'
@@ -84,21 +87,17 @@ export abstract class BasePanel extends UIComponent<PanelState> {
         }
     }
 
-    /**
-     * Implementación optimizada de render que solo actualiza lo necesario.
-     */
     protected render(): void {
-        // 1. Visibilidad
+        if (!this.wrapperElement) return;
+
         this.wrapperElement.style.display = this.state.isOpen ? 'block' : 'none';
         
-        // 2. Estados de enfoque (maneja el PanelManager, pero aseguramos la clase)
         if (this.state.isOpen) {
             this.wrapperElement.classList.add('panel-focused');
         } else {
             this.wrapperElement.classList.remove('panel-focused');
         }
 
-        // 3. Cargando / Error / Contenido
         this.loaderElement.style.display = this.state.isLoading ? 'block' : 'none';
         this.errorElement.style.display = this.state.error ? 'block' : 'none';
         if (this.state.error) {
@@ -107,7 +106,6 @@ export abstract class BasePanel extends UIComponent<PanelState> {
         
         this.contentElement.style.display = (this.state.isLoading || this.state.error) ? 'none' : 'block';
         
-        // Solo actualizamos el contenido interno si no estamos cargando y no hay error
         if (!this.state.isLoading && !this.state.error) {
             const newContent = this.renderContent();
             if (this.contentElement.firstChild !== newContent) {
@@ -120,6 +118,7 @@ export abstract class BasePanel extends UIComponent<PanelState> {
     protected abstract renderContent(): HTMLElement;
 
     protected createElement(): HTMLElement {
+        this.initElements();
         return this.wrapperElement;
     }
 }
