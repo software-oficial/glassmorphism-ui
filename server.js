@@ -7,10 +7,7 @@ const PORT = process.env.PORT || 3000;
 // Proxy para resolver problemas de CORS con el backend de Railway
 app.use('/api', createProxyMiddleware({ 
   target: 'https://ecosistema-core-production.up.railway.app', 
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api': '' 
-  }
+  changeOrigin: true
 }));
 
 // Servir archivos estáticos desde la carpeta 'dist' (generada por vite build)
