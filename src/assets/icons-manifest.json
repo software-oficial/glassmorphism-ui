@@ -1,0 +1,10 @@
+{
+  "browser": "browser.svg",
+  "terminal": "terminal.svg",
+  "folder": "folder.svg",
+  "settings": "settings.svg",
+  "user": "user.svg",
+  "cpu": "cpu.svg",
+  "activity": "activity.svg",
+  "alert": "alert.svg"
+}
