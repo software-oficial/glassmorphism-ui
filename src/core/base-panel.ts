@@ -12,7 +12,6 @@ export abstract class BasePanel extends UIComponent<PanelState> {
     protected panelId: string;
     protected wrapperElement!: HTMLElement;
     protected contentElement!: HTMLElement;
-    protected headerElement!: HTMLElement;
     protected errorElement!: HTMLElement;
     protected loaderElement!: HTMLElement;
 
@@ -31,34 +30,28 @@ export abstract class BasePanel extends UIComponent<PanelState> {
         if (this.wrapperElement) return;
 
         this.wrapperElement = this.h('div', { 
-            className: 'glass-panel',
+            className: 'module-view',
             style: 'display: none'
         }, []);
         
-        this.headerElement = this.h('div', { className: 'panel-header' }, [
-            this.h('span', { className: 'panel-title' }, [(this.panelId || 'Panel').toUpperCase()]),
-            this.h('button', { 
-                className: 'btn-close', 
-                onclick: () => this.close() 
-            }, ['✕'])
-        ]);
-
         this.loaderElement = this.h('div', { className: 'loader' }, ['Cargando...']);
-        this.errorElement = this.h('div', { className: 'panel-error' }, []);
-        this.contentElement = this.h('div', { className: 'panel-content' }, []);
+        this.errorElement = this.h('div', { className: 'module-error' }, []);
+        this.contentElement = this.h('div', { className: 'module-content' }, []);
 
-        this.wrapperElement.appendChild(this.headerElement);
         this.wrapperElement.appendChild(this.loaderElement);
         this.wrapperElement.appendChild(this.contentElement);
         this.wrapperElement.appendChild(this.errorElement);
     }
 
     public async open(): Promise<void> {
+        console.log(`[BasePanel] Opening panel: ${this.panelId}`);
         this.setState({ isOpen: true, isLoading: true, error: null });
         
         try {
             await this.loadInitialData();
+            console.log(`[BasePanel] ${this.panelId} loaded successfully.`);
         } catch (e: any) {
+            console.error(`[BasePanel] Error loading ${this.panelId}:`, e);
             this.setState({ error: e.message, isLoading: false });
         }
     }
@@ -69,19 +62,27 @@ export abstract class BasePanel extends UIComponent<PanelState> {
 
     protected abstract loadInitialData(): Promise<void>;
 
-    protected async callApi<T>(command: string, params: any = {}): Promise<T | null> {
-        console.log(`[Panel:${this.panelId}] Executing: ${command}`, params);
+    protected async callApi<T>(command: string, params: any = {}, retries: number = 2): Promise<T | null> {
+        console.log(`[BasePanel] Calling API command: ${command} for panel ${this.panelId} (Retries left: ${retries})`);
         this.setState({ isLoading: true });
         
         try {
             const res = await api.executeCommand<T>(command, params);
+            console.log(`[BasePanel] API response for ${command}:`, res);
             if (!res.success) {
                 throw new Error(res.message);
             }
             this.setState({ isLoading: false });
             return res.data;
         } catch (e: any) {
-            console.error(`[Panel:${this.panelId}] API Error: ${e.message}`);
+            console.error(`[BasePanel] API Error in ${command}:`, e);
+            
+            if (retries > 0) {
+                console.log(`[BasePanel] Retrying ${command}...`);
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Espera 1s antes de reintentar
+                return this.callApi(command, params, retries - 1);
+            }
+
             this.setState({ error: e.message, isLoading: false });
             return null;
         }
@@ -90,16 +91,10 @@ export abstract class BasePanel extends UIComponent<PanelState> {
     protected render(): void {
         if (!this.wrapperElement) return;
 
-        this.wrapperElement.style.display = this.state.isOpen ? 'block' : 'none';
+        this.wrapperElement.style.display = this.state.isOpen ? 'flex' : 'none';
         
-        if (this.state.isOpen) {
-            this.wrapperElement.classList.add('panel-focused');
-        } else {
-            this.wrapperElement.classList.remove('panel-focused');
-        }
-
-        this.loaderElement.style.display = this.state.isLoading ? 'block' : 'none';
-        this.errorElement.style.display = this.state.error ? 'block' : 'none';
+        this.loaderElement.style.display = this.state.isLoading ? 'flex' : 'none';
+        this.errorElement.style.display = this.state.error ? 'flex' : 'none';
         if (this.state.error) {
             this.errorElement.textContent = this.state.error;
         }

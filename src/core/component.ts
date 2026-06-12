@@ -5,11 +5,24 @@ export abstract class UIComponent<TState = any> {
   constructor(initialState: TState) {
     this.state = initialState;
     this.element = this.createElement();
-    this.render();
+    this.render(); // Se llama una sola vez al inicio
   }
 
   protected abstract createElement(): HTMLElement;
+  
+  /**
+   * Construye la estructura inicial del componente. 
+   * DEBE llamarse una sola vez. No debe usar innerHTML = '' si se desea mantener el foco.
+   */
   protected abstract render(): void;
+
+  /**
+   * Método opcional para actualizar partes específicas del DOM cuando el estado cambia.
+   * Evita la reconstrucción total del componente.
+   */
+  protected update(): void {
+    // Implementación opcional en las subclases
+  }
 
   public setState(newState: Partial<TState>): void {
     const hasChanged = Object.entries(newState).some(
@@ -18,7 +31,7 @@ export abstract class UIComponent<TState = any> {
 
     if (hasChanged) {
       this.state = { ...this.state, ...newState };
-      this.render();
+      this.update(); // Actualización quirúrgica en lugar de renderizado total
     }
   }
 
@@ -28,15 +41,14 @@ export abstract class UIComponent<TState = any> {
 
   public destroy(): void {
     this.element.remove();
+    // Limpieza de referencias para ayudar al Garbage Collector
+    (this.element as any) = null;
   }
 
   public get domElement(): HTMLElement {
     return this.element;
   }
 
-  /**
-   * Helper para crear elementos de forma segura evitando innerHTML
-   */
   protected h(tag: string, props: Record<string, any> = {}, children: (HTMLElement | string | any[])[] = []): HTMLElement {
     const el = document.createElement(tag);
     for (const [key, value] of Object.entries(props)) {
@@ -55,7 +67,7 @@ export abstract class UIComponent<TState = any> {
         if (Array.isArray(item)) {
           acc.push(...flattenChildren(item));
         } else if (item === null || item === undefined) {
-          // Skip null/undefined children
+          // Skip
         } else {
           acc.push(item);
         }
@@ -68,8 +80,6 @@ export abstract class UIComponent<TState = any> {
         el.appendChild(document.createTextNode(child));
       } else if (child instanceof HTMLElement) {
         el.appendChild(child);
-      } else {
-        console.warn(`[UIComponent] Invalid child type provided to h(): ${typeof child}`, child);
       }
     });
     return el;

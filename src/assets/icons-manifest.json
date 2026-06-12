@@ -6,5 +6,9 @@
   "user": "user.svg",
   "cpu": "cpu.svg",
   "activity": "activity.svg",
-  "alert": "alert.svg"
+  "alert": "alert.svg",
+  "inventory": "folder.svg",
+  "communication": "activity.svg",
+  "finance": "alert.svg",
+  "management": "settings.svg"
 }

@@ -2,154 +2,105 @@ import { BasePanel } from '../../core/base-panel';
 
 interface TenantInfo {
     id: string;
-    name: string;
-    plan: string;
-    status: 'activo' | 'suspendido';
+    business_name: string;
+    plan_name: string;
+    status: 'active' | 'blocked' | 'suspended' | 'deleted';
+    plan_id?: number;
 }
 
-interface UserInfo {
-    id: string;
-    name: string;
-    role: 'MASTER' | 'OWNER' | 'EMPLOYEE';
-    permissions: string[];
-}
-
-interface AdminState extends PanelState {
-    currentUser: UserInfo | null;
+interface SaaSState extends PanelState {
     tenants: TenantInfo[];
-    employees: UserInfo[];
-    viewMode: 'MASTER' | 'TENANT';
+    selectedTenant: TenantInfo | null;
 }
 
-export class AdminPanel extends BasePanel<AdminState> {
+export class AdminPanel extends BasePanel<SaaSState> {
     constructor() {
-        super('admin', {
-            currentUser: null,
+        super('saas', {
             tenants: [],
-            employees: [],
-            viewMode: 'TENANT'
+            selectedTenant: null
         });
     }
 
     protected async loadInitialData(): Promise<void> {
-        const user = await this.callApi<UserInfo>('auth.get_current_user', {});
-        if (user) {
-            this.setState({ 
-                currentUser: user,
-                viewMode: user.role === 'MASTER' ? 'MASTER' : 'TENANT'
-            });
-        }
-
-        if (this.state.viewMode === 'MASTER') {
-            await this.loadMasterData();
-        } else {
-            await this.loadTenantData();
-        }
+        await this.loadTenants();
     }
 
-    private async loadMasterData(): Promise<void> {
-        const tenants = await this.callApi<TenantInfo[]>('admin.list_all_tenants', {});
+    private async loadTenants(): Promise<void> {
+        const tenants = await this.callApi<TenantInfo[]>('saas.list_tenants', {});
         if (tenants) {
             this.setState({ tenants });
         }
     }
 
-    private async loadTenantData(): Promise<void> {
-        const employees = await this.callApi<UserInfo[]>('admin.list_employees', {});
-        if (employees) {
-            this.setState({ employees });
-        }
-    }
-
     protected renderContent(): HTMLElement {
-        const { viewMode, currentUser } = this.state;
-
-        return this.h('div', { className: 'admin-container' }, [
-            this.h('div', { className: 'admin-welcome' }, [
-                this.h('h2', {}, [`Panel de Control ${viewMode}`]),
-                this.h('span', { className: 'user-badge' }, [`Usuario: ${currentUser?.name || 'Desconocido'} (${currentUser?.role})`])
+        return this.h('div', { className: 'saas-container' }, [
+            this.h('div', { className: 'saas-header' }, [
+                this.h('h2', {}, ['Gestión de Clientes SaaS']),
+                this.h('span', { 
+                    className: `status-badge ${this.state.tenants.length > 0 ? 'online' : 'empty'}` 
+                }, [`${this.state.tenants.length} Clientes`])
             ]),
-            viewMode === 'MASTER' 
-                ? this.renderMasterView() 
-                : this.renderTenantView()
+            this.renderTenantList()
         ]);
     }
 
-    private renderMasterView(): HTMLElement {
-        return this.h('div', { className: 'master-view' }, [
-            this.h('div', { className: 'view-section' }, [
-                this.h('h3', {}, ['Gestión de Clientes (Tenants)']),
-                this.h('div', { className: 'tenant-grid' }, [
-                    ...this.state.tenants.map(t => this.createTenantCard(t))
+    private renderTenantList(): HTMLElement {
+        if (this.state.tenants.length === 0) {
+            return this.h('div', { className: 'empty-state' }, ['No hay clientes registrados.']);
+        }
+
+        return this.h('div', { className: 'tenant-list' }, [
+            ...this.state.tenants.map(t => this.createTenantRow(t))
+        ]);
+    }
+
+    private createTenantRow(t: TenantInfo): HTMLElement {
+        const statusClass = t.status === 'active' ? 'status-active' : 'status-danger';
+        
+        return this.h('div', { 
+            className: 'tenant-row',
+            onclick: () => this.viewTenantDetails(t)
+        }, [
+            this.h('div', { className: 'tenant-main' }, [
+                this.h('div', { className: 'tenant-avatar' }, [t.business_name.charAt(0).toUpperCase()]),
+                this.h('div', { className: 'tenant-details' }, [
+                    this.h('span', { className: 'tenant-name' }, [t.business_name]),
+                    this.h('span', { className: 'tenant-plan' }, [t.plan_name || 'Plan Free'])
                 ])
             ]),
-            this.h('button', { 
-                className: 'btn-glass btn-active', 
-                onclick: () => this.createTenant() 
-            }, ['+ Crear Nuevo Cliente'])
-        ]);
-    }
-
-    private renderTenantView(): HTMLElement {
-        return this.h('div', { className: 'tenant-view' }, [
-            this.h('div', { className: 'view-section' }, [
-                this.h('h3', {}, ['Gestión de Equipo']),
-                this.h('div', { className: 'employee-list' }, [
-                    ...this.state.employees.map(e => this.createEmployeeRow(e))
-                ])
-            ]),
-            this.h('button', { 
-                className: 'btn-glass', 
-                onclick: () => this.createEmployee() 
-            }, ['+ Agregar Empleado'])
-        ]);
-    }
-
-    private createTenantCard(t: TenantInfo): HTMLElement {
-        return this.h('div', { className: 'tenant-card' }, [
-            this.h('div', { className: 'tenant-info' }, [
-                this.h('strong', {}, [t.name]),
-                this.h('span', { className: 'tenant-plan' }, [t.plan])
-            ]),
-            this.h('div', { className: 'tenant-actions' }, [
+            this.h('div', { className: 'tenant-status-zone' }, [
+                this.h('span', { className: `status-dot ${statusClass}` }, []),
                 this.h('button', { 
-                    className: 'btn-glass', 
-                    onclick: () => this.toggleTenantStatus(t.id) 
-                }, [t.status === 'activo' ? 'Suspender' : 'Activar'])
+                    className: 'btn-status-toggle',
+                    onclick: (e) => {
+                        e.stopPropagation();
+                        this.toggleStatus(t);
+                    }
+                }, [t.status === 'active' ? 'Bloquear' : 'Activar'])
             ])
         ]);
     }
 
-    private createEmployeeRow(e: UserInfo): HTMLElement {
-        return this.h('div', { className: 'employee-row' }, [
-            this.h('div', { className: 'emp-info' }, [
-                this.h('span', {}, [e.name]),
-                this.h('span', { className: 'emp-role' }, [e.role])
-            ]),
-            this.h('button', { 
-                className: 'btn-glass', 
-                onclick: () => this.removeEmployee(e.id) 
-            }, ['Eliminar'])
-        ]);
+    private async toggleStatus(t: TenantInfo) {
+        const newStatus = t.status === 'active' ? 'blocked' : 'active';
+        const res = await this.callApi('saas.set_status', { 
+            tenant_id: t.id, 
+            status: newStatus 
+        });
+        
+        if (res) {
+            await this.loadTenants();
+        }
     }
 
-    private async createTenant() {
-        await this.callApi('admin.create_tenant', { name: 'Nuevo Cliente' });
-        await this.loadMasterData();
-    }
-
-    private async toggleTenantStatus(id: string) {
-        await this.callApi('admin.toggle_tenant_status', { tenant_id: id });
-        await this.loadMasterData();
-    }
-
-    private async createEmployee() {
-        await this.callApi('admin.create_employee', { name: 'Nuevo Empleado', role: 'EMPLOYEE' });
-        await this.loadTenantData();
-    }
-
-    private async removeEmployee(id: string) {
-        await this.callApi('admin.remove_employee', { user_id: id });
-        await this.loadTenantData();
+    private async viewTenantDetails(t: TenantInfo) {
+        const billing = await this.callApi('saas.billing_status', { tenant_id: t.id });
+        if (billing) {
+            alert(`Cliente: ${t.business_name}
+Plan: ${billing.plan}
+Precio: ${billing.price}
+Estado: ${billing.status}`);
+            // En el futuro, esto abrirá un modal detallado de facturación.
+        }
     }
 }

@@ -71,9 +71,8 @@ body[data-theme="light"][data-tier="low"] {
 
 body {
   margin: 0;
-
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: radial-gradient(circle at top left, #1e293b 0%, #0f172a 40%, #020617 100%);
   background-attachment: fixed;
   height: 100vh;
   width: 100vw;
@@ -91,9 +90,7 @@ body {
   overflow: hidden;
 }
 
-/* --- Optimización de Multi-Paneles (Performance Mode) --- */
-
-/* Solo el panel enfocado tiene el costo computacional del blur */
+/* --- Optimización de Multi-Paneles --- */
 .glass-panel.panel-focused {
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
@@ -101,15 +98,13 @@ body {
   z-index: 1000;
 }
 
-/* Los paneles en segundo plano desactivan el blur para salvar la GPU */
 .glass-panel.panel-blurred {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   opacity: 0.6;
-  pointer-events: none; /* Evita interacciones accidentales con paneles ocultos */
+  pointer-events: none;
 }
 
-/* Modo HP global: Desactiva todo el blur en todos los paneles */
 body.hp-mode .glass-panel {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -302,7 +297,100 @@ body.hp-mode .os-dock {
   to { transform: translateX(0); opacity: 1; }
 }
 
-/* --- Glass Menu Adaptativo --- */
+/* --- Auth System Styles --- */
+.auth-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  background: radial-gradient(circle at center, rgba(30, 41, 59, 0.8) 0%, rgba(2, 6, 23, 0.9) 100%);
+  backdrop-filter: blur(10px);
+}
+
+.auth-card {
+  width: 400px;
+  padding: 40px;
+  border-radius: var(--radius-lg);
+  text-align: center;
+  box-shadow: var(--glass-shadow);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-card h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.input-group label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-left: 4px;
+}
+
+.input-group input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  color: white;
+  font-family: inherit;
+  font-size: 1rem;
+  transition: all var(--transition-fast);
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+}
+
+.toggle-auth {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color var(--transition-fast);
+}
+
+.toggle-auth:hover {
+  color: var(--accent-color);
+}
+
+.auth-error {
+  color: #ff4d4d;
+  font-size: 0.85rem;
+  background: rgba(255, 77, 77, 0.1);
+  padding: 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 77, 77, 0.2);
+}
+
 .glass-menu {
   position: fixed;
   z-index: 2000;
@@ -393,4 +481,49 @@ body.hp-mode .os-dock {
   font-weight: 500;
   text-align: center;
   opacity: 0.8;
+}
+
+/* --- Estilos de Módulos (Paneles) --- */
+.module-view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  z-index: 5;
+  transition: opacity var(--transition-smooth);
+}
+
+.module-content {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px;
+  box-sizing: border-box;
+  color: var(--text-primary);
+}
+
+.module-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 77, 77, 0.2);
+  color: #ff4d4d;
+  padding: 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid #ff4d4d;
+  text-align: center;
+}
+
+.loader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2rem;
+  color: var(--accent-color);
 }

@@ -48,7 +48,7 @@ async function verifySystem() {
   } catch (error) {
     console.error('\n❌ Verification failed:');
     console.error(error);
-    process.exit(1);
+    throw new Error('Verification failed');
   } finally {
     await browser.close();
   }

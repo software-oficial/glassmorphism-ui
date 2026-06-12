@@ -50,10 +50,14 @@ export class Store {
     const updatedSlice = { ...previousSlice, ...newState };
 
     let hasChanged = false;
-    for (const key in newState) {
-      if (previousSlice[key as keyof AppState[K]] !== newState[key as keyof AppState[K]]) {
-        hasChanged = true;
-        break;
+    if (!previousSlice) {
+      hasChanged = true;
+    } else {
+      for (const key in newState) {
+        if (previousSlice[key as keyof AppState[K]] !== newState[key as keyof AppState[K]]) {
+          hasChanged = true;
+          break;
+        }
       }
     }
 

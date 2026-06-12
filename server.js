@@ -6,7 +6,7 @@ const PORT = process.env.PORT || 3000;
 
 // Proxy para resolver problemas de CORS con el backend de Railway
 app.use('/api', createProxyMiddleware({ 
-  target: 'https://ecosistema-core-production.up.railway.app', 
+  target: process.env.BACKEND_URL || 'http://backend:8080', 
   changeOrigin: true
 }));
 

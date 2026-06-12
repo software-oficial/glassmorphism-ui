@@ -9,28 +9,28 @@ export interface ApiResponse<T = any> {
 
 class ApiClient {
     private baseUrl: string;
-    private tenantId: string = 'default_tenant';
-    private userId: string = 'admin_user';
+    private token: string | null = null;
 
     constructor() {
-        // Usamos ruta relativa para que el proxy del servidor maneje la petición y evite el CORS
-        this.baseUrl = '/api';
+        this.baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080'; // Soporta variables de entorno de Railway/Vite
+    }
+
+    setToken(token: string | null) {
+        this.token = token;
+        if (token) {
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        } else {
+            delete axios.defaults.headers.common['Authorization'];
+        }
     }
 
     async executeCommand<T = any>(command: string, params: any = {}): Promise<ApiResponse<T>> {
         try {
-            const url = `${this.baseUrl}/command`;
+            const url = `${this.baseUrl}/api/command`;
             const response = await axios.post(url, 
             {
                 command,
                 params
-            }, 
-            {
-                headers: {
-                    'X-Tenant-ID': this.tenantId,
-                    'X-User-ID': this.userId,
-                    'Content-Type': 'application/json'
-                }
             });
 
             return response.data;
@@ -43,12 +43,17 @@ class ApiClient {
         }
     }
 
-    setTenant(tenantId: string) {
-        this.tenantId = tenantId;
-    }
-
-    setUserId(userId: string) {
-        this.userId = userId;
+    async post<T = any>(url: string, data: any): Promise<ApiResponse<T>> {
+        try {
+            const response = await axios.post(`${this.baseUrl}${url}`, data);
+            return response.data;
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Network error occurred',
+                error: error.message
+            };
+        }
     }
 }
 
